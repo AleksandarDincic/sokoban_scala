@@ -17,6 +17,11 @@ class Map(val tilesMatrix: Array[Array[Tile]]) {
     }
 
     def isWon: Boolean = misplacedCrates == 0 && openTargets == 0
+
+    def move(move: Move): GameState = ???
+    //TODO Consider adding crate coordinates (you will probably need it for the solver)
+    //Add getter to Map for this and player position instead of making GameState public!!!
+    //Adding target coordinates should be useful as well, for solver heuristics!!!
   }
 
   private def calculateGameState(): GameState = {
@@ -57,9 +62,6 @@ class Map(val tilesMatrix: Array[Array[Tile]]) {
   val mapWidth: Int = tilesMatrix(0).length
   val mapHeight: Int = tilesMatrix.length
 
-
-  def movePlayer(direction: Char): Map = ???
-
   def isValid: Try[Unit] = {
     val mapIsValid: Try[Unit] = Success(()) //TODO Implement map validation
     mapIsValid match {
@@ -72,7 +74,7 @@ class Map(val tilesMatrix: Array[Array[Tile]]) {
 
   def isWon: Boolean = gameState.isWon
 
-  def move(direction: Int): Boolean = ???
+  def move(move: Move): Boolean = ???
 
   override def toString: String = {
     val buffer: StringBuilder = new StringBuilder()
@@ -91,15 +93,7 @@ class Map(val tilesMatrix: Array[Array[Tile]]) {
 }
 
 object Map {
-  def tileFromSymbol(symbol: Char): Try[Tile] = symbol match {
-    case Floor.SYMBOL_FLOOR => Success(Floor())
-    case Wall.SYMBOL_WALL => Success(Wall())
-    case Crate.SYMBOL_CRATE_FLOOR => Success(Crate(Floor()))
-    case Crate.SYMBOL_CRATE_TARGET => Success(Crate(Target()))
-    case Target.SYMBOL_TARGET => Success(Target())
-    case Player.SYMBOL_PLAYER => Success(Player(Floor()))
-    case _ => Failure(new Throwable("Symbol is invalid: " + symbol))
-  }
+
 
 
   def mapFromFile(path: String): Try[Map] = {
@@ -112,7 +106,7 @@ object Map {
           Success(buffer.toArray)
         }
         case symbol :: tail =>
-          val newTile = tileFromSymbol(symbol)
+          val newTile = Tile.tileFromSymbol(symbol)
           newTile match {
             case Failure(e) => Failure(e)
             case Success(tile) => buildTileRowTail(tail, buffer.addOne(tile))

@@ -1,10 +1,6 @@
 package sokoban
 
-import sokoban.Crate.{SYMBOL_CRATE_FLOOR, SYMBOL_CRATE_TARGET}
-import sokoban.Floor.SYMBOL_FLOOR
-import sokoban.Player.SYMBOL_PLAYER
-import sokoban.Target.SYMBOL_TARGET
-import sokoban.Wall.SYMBOL_WALL
+import scala.util.{Failure, Success, Try}
 
 sealed abstract class Tile {
   def isTraversable: Boolean
@@ -14,6 +10,18 @@ sealed abstract class Tile {
   def standingOn: Option[Tile]
 
   def symbol: Char
+}
+
+object Tile {
+  def tileFromSymbol(symbol: Char): Try[Tile] = symbol match {
+    case Floor.SYMBOL_FLOOR => Success(Floor())
+    case Wall.SYMBOL_WALL => Success(Wall())
+    case Crate.SYMBOL_CRATE_FLOOR => Success(Crate(Floor()))
+    case Crate.SYMBOL_CRATE_TARGET => Success(Crate(Target()))
+    case Target.SYMBOL_TARGET => Success(Target())
+    case Player.SYMBOL_PLAYER => Success(Player(Floor()))
+    case _ => Failure(new Throwable("Symbol is invalid: " + symbol))
+  }
 }
 
 object Floor {
@@ -27,7 +35,7 @@ case class Floor() extends Tile {
 
   override val standingOn: Option[Tile] = None
 
-  override val symbol: Char = SYMBOL_FLOOR
+  override val symbol: Char = Floor.SYMBOL_FLOOR
 }
 
 object Wall {
@@ -41,7 +49,7 @@ case class Wall() extends Tile {
 
   override val standingOn: Option[Tile] = None
 
-  override val symbol: Char = SYMBOL_WALL
+  override val symbol: Char = Wall.SYMBOL_WALL
 
 }
 
@@ -58,8 +66,8 @@ case class Crate(floor: Tile) extends Tile {
   override val standingOn: Option[Tile] = Some(floor)
 
   override def symbol: Char = this.standingOn match {
-    case Some(floor@Target()) => SYMBOL_CRATE_TARGET
-    case _ => SYMBOL_CRATE_FLOOR
+    case Some(floor@Target()) => Crate.SYMBOL_CRATE_TARGET
+    case _ => Crate.SYMBOL_CRATE_FLOOR
   }
 }
 
@@ -74,7 +82,7 @@ case class Target() extends Tile {
 
   override val standingOn: Option[Tile] = None
 
-  override val symbol: Char = SYMBOL_TARGET
+  override val symbol: Char = Target.SYMBOL_TARGET
 }
 
 object Player {
@@ -88,5 +96,5 @@ case class Player(floor: Tile) extends Tile {
 
   override val standingOn: Option[Tile] = Some(floor)
 
-  override val symbol: Char = SYMBOL_PLAYER
+  override val symbol: Char = Player.SYMBOL_PLAYER
 }
