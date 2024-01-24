@@ -19,7 +19,7 @@ object Move {
 }
 
 case class Up() extends Move {
-  override def movementInCoords: (Int, Int) = (0, 1)
+  override def movementInCoords: (Int, Int) = (-1, 0)
 
   override def symbol: Char = Up.SYMBOL_UP
 }
@@ -29,7 +29,7 @@ object Up {
 }
 
 case class Down() extends Move {
-  override def movementInCoords: (Int, Int) = (0, -1)
+  override def movementInCoords: (Int, Int) = (1, 0)
 
   override def symbol: Char = Down.SYMBOL_DOWN
 }
@@ -39,7 +39,7 @@ object Down {
 }
 
 case class Left() extends Move {
-  override def movementInCoords: (Int, Int) = (-1, 0)
+  override def movementInCoords: (Int, Int) = (0, -1)
 
   override def symbol: Char = Left.SYMBOL_LEFT
 }
@@ -49,7 +49,7 @@ object Left {
 }
 
 case class Right() extends Move {
-  override def movementInCoords: (Int, Int) = (1, 0)
+  override def movementInCoords: (Int, Int) = (0, 1)
 
   override def symbol: Char = Right.SYMBOL_RIGHT
 }

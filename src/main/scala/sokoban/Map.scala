@@ -1,27 +1,25 @@
 package sokoban
 
 import scala.annotation.tailrec
+import scala.collection.immutable.HashSet
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try, Using}
 
 class Map(val tilesMatrix: Array[Array[Tile]]) {
 
-  private class GameState(val players: Int, val playerPosition: Option[(Int, Int)], val misplacedCrates: Int, val openTargets: Int, val placedCrates: Int) {
+  private class GameState(val players: HashSet[(Int, Int)], val crates: HashSet[(Int, Int)], val targets: HashSet[(Int, Int)]) {
     def isValid: Try[Unit] = {
-      if (players != 0) {
+      if (players.size != 1) {
         Failure(new Throwable("There should be exactly one player on the map."))
-      } else if (misplacedCrates != openTargets) {
+      } else if (crates.size != targets.size) {
         Failure(new Throwable("The number of crates and targets on the map should be the same."))
       }
       else Success(())
     }
 
-    def isWon: Boolean = misplacedCrates == 0 && openTargets == 0
+    def isWon: Boolean = crates.equals(targets)
 
-    def move(move: Move): GameState = ???
-    //TODO Consider adding crate coordinates (you will probably need it for the solver)
-    //Add getter to Map for this and player position instead of making GameState public!!!
-    //Adding target coordinates should be useful as well, for solver heuristics!!!
+    def playerPosition: Option[(Int, Int)] = players.headOption
   }
 
   private def calculateGameState(): GameState = {
@@ -40,13 +38,9 @@ class Map(val tilesMatrix: Array[Array[Tile]]) {
 
         val currTile = tilesMatrix(row)(col)
         val nextGameState = currTile match {
-          case Crate(standingOn) =>
-            standingOn match {
-              case Floor() => new GameState(currState.players, currState.playerPosition, currState.misplacedCrates + 1, currState.openTargets, currState.placedCrates)
-              case Target() => new GameState(currState.players, currState.playerPosition, currState.misplacedCrates, currState.openTargets, currState.placedCrates + 1)
-            }
-          case Player(_) => new GameState(currState.players + 1, Some((row, col)), currState.misplacedCrates, currState.openTargets, currState.placedCrates)
-          case Target() => new GameState(currState.players, Some((row, col)), currState.misplacedCrates, currState.openTargets + 1, currState.placedCrates)
+          case Player(_) => new GameState(currState.players.incl((row, col)), currState.crates, currState.targets)
+          case Crate(_) => new GameState(currState.players, currState.crates.incl((row, col)), currState.targets)
+          case Target() => new GameState(currState.players, currState.crates, currState.targets.incl((row, col)))
           case _ => currState
         }
 
@@ -54,7 +48,7 @@ class Map(val tilesMatrix: Array[Array[Tile]]) {
       }
     }
 
-    calculateGameStateTail(0, 0, new GameState(0, None, 0, 0, 0))
+    calculateGameStateTail(0, 0, new GameState(HashSet(), HashSet(), HashSet()))
   }
 
   private val gameState = calculateGameState()
@@ -74,12 +68,51 @@ class Map(val tilesMatrix: Array[Array[Tile]]) {
 
   def isWon: Boolean = gameState.isWon
 
-  def move(move: Move): Boolean = ???
+  def move(move: Move): Option[Map] = {
+    def validPos(pos: (Int, Int)): Boolean = pos._1 >= 0 || pos._1 < mapWidth || pos._2 >= 0 || pos._2 < mapHeight
+
+    def posAfterMove(pos: (Int, Int), move: Move): (Int, Int) = {
+      val moveDelta = move.movementInCoords
+      (pos._1 + moveDelta._1, pos._2 + moveDelta._2)
+    }
+
+    gameState.playerPosition match {
+      case None => None
+      case Some(pos) =>
+        val playerTile = tilesMatrix(pos._1)(pos._2)
+
+        val targetPos = posAfterMove(pos, move)
+
+        if (validPos(targetPos)) {
+          val steppingTile = tilesMatrix(targetPos._1)(targetPos._2)
+          if (steppingTile.isTraversable) {
+            val playerCurrentFloorTile = playerTile.standingOn.get // safe in all cases
+            tilesMatrix(pos._1)(pos._2) = playerCurrentFloorTile
+            tilesMatrix(targetPos._1)(targetPos._2) = new Player(steppingTile)
+            Some(new Map(tilesMatrix)) //TODO optimize so it doesn't remake game state every time
+          }
+          else if (steppingTile.isPushable) {
+            val pushedToPos = posAfterMove(targetPos, move)
+            val pushedToTile = tilesMatrix(pushedToPos._1)(pushedToPos._2)
+            if (pushedToTile.isTraversable) {
+              val playerCurrentFloorTile = playerTile.standingOn.get // safe in all cases
+              tilesMatrix(pos._1)(pos._2) = playerCurrentFloorTile
+              tilesMatrix(targetPos._1)(targetPos._2) = new Player(steppingTile.standingOn.get) //safe in all cases
+
+              tilesMatrix(pushedToPos._1)(pushedToPos._2) = steppingTile.cloneWithNewFloor(pushedToTile)
+
+              Some(new Map(tilesMatrix)) //TODO optimize so it doesn't remake game state every time
+            }
+            else None
+          }
+          else None
+        }
+        else None
+    }
+  }
 
   override def toString: String = {
     val buffer: StringBuilder = new StringBuilder()
-
-    buffer += '\n'
 
     for (row <- tilesMatrix) {
       for (tile <- row) {
@@ -93,7 +126,6 @@ class Map(val tilesMatrix: Array[Array[Tile]]) {
 }
 
 object Map {
-
 
 
   def mapFromFile(path: String): Try[Map] = {

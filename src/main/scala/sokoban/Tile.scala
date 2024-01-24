@@ -10,6 +10,8 @@ sealed abstract class Tile {
   def standingOn: Option[Tile]
 
   def symbol: Char
+
+  def cloneWithNewFloor(floor: Tile): Tile
 }
 
 object Tile {
@@ -36,6 +38,8 @@ case class Floor() extends Tile {
   override val standingOn: Option[Tile] = None
 
   override val symbol: Char = Floor.SYMBOL_FLOOR
+
+  override def cloneWithNewFloor(floor: Tile): Tile = new Floor()
 }
 
 object Wall {
@@ -51,6 +55,7 @@ case class Wall() extends Tile {
 
   override val symbol: Char = Wall.SYMBOL_WALL
 
+  override def cloneWithNewFloor(floor: Tile): Tile = new Wall()
 }
 
 object Crate {
@@ -69,6 +74,8 @@ case class Crate(floor: Tile) extends Tile {
     case Some(floor@Target()) => Crate.SYMBOL_CRATE_TARGET
     case _ => Crate.SYMBOL_CRATE_FLOOR
   }
+
+  override def cloneWithNewFloor(floor: Tile): Tile = new Crate(floor)
 }
 
 object Target {
@@ -83,6 +90,8 @@ case class Target() extends Tile {
   override val standingOn: Option[Tile] = None
 
   override val symbol: Char = Target.SYMBOL_TARGET
+
+  override def cloneWithNewFloor(floor: Tile): Tile = new Target()
 }
 
 object Player {
@@ -97,4 +106,6 @@ case class Player(floor: Tile) extends Tile {
   override val standingOn: Option[Tile] = Some(floor)
 
   override val symbol: Char = Player.SYMBOL_PLAYER
+
+  override def cloneWithNewFloor(floor: Tile): Tile = new Player(floor)
 }
