@@ -1,4 +1,4 @@
-package sokoban
+package sokoban.lib
 
 import scala.util.{Failure, Success, Try}
 
@@ -15,6 +15,16 @@ object Move {
     case Left.SYMBOL_LEFT => Success(Left())
     case Right.SYMBOL_RIGHT => Success(Right())
     case _ => Failure(new Throwable("Symbol is invalid: " + symbol))
+  }
+
+  def posAfterMove(pos: (Int, Int), move: Move): (Int, Int) = {
+    val moveDelta = move.movementInCoords
+    (pos._1 + moveDelta._1, pos._2 + moveDelta._2)
+  }
+
+  def posBeforeMove(pos: (Int, Int), move: Move): (Int, Int) = {
+    val moveDelta = move.movementInCoords
+    (pos._1 - moveDelta._1, pos._2 - moveDelta._2)
   }
 }
 

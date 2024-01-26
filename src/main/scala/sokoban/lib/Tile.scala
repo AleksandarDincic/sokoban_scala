@@ -1,4 +1,4 @@
-package sokoban
+package sokoban.lib
 
 import scala.util.{Failure, Success, Try}
 
