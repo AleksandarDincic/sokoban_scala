@@ -13,8 +13,8 @@ abstract class WindowContent extends SplitPane(Orientation.Vertical) {
   protected val display = createDisplay()
   protected val menu = createMenu()
 
-  leftComponent = createDisplay()
-  rightComponent =  createMenu()
+  leftComponent = display
+  rightComponent =  menu
   resizeWeight = RATIO
   dividerSize = 0
   enabled = false
