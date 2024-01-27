@@ -10,6 +10,6 @@ object Main extends App {
   println(map2)
   val map4 = map2.undo().get
   println(map4)
-  val map5 = map4.move(new Left()).get
+  val map5 = map2.move(new Left()).get
   println(map5)
 }

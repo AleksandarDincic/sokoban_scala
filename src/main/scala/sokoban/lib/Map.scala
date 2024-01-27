@@ -9,7 +9,7 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
   def this(tilesMatrix: Array[Array[Tile]]) = this(tilesMatrix, List())
 
-  private class GameState(val players: HashSet[(Int, Int)], val crates: HashSet[(Int, Int)], val targets: HashSet[(Int, Int)]) {
+  private class TileCounter(val players: HashSet[(Int, Int)], val crates: HashSet[(Int, Int)], val targets: HashSet[(Int, Int)]) {
     def isValid: Try[Unit] = {
       if (players.size != 1) {
         Failure(new Throwable("There should be exactly one player on the map."))
@@ -22,13 +22,15 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
     def isWon: Boolean = crates.equals(targets)
 
     def playerPosition: Option[(Int, Int)] = players.headOption
+
+    //TODO: Split Map logic and Game logic into separate classes
   }
 
-  private def calculateGameState(): GameState = {
+  private def calculateTileCounter(): TileCounter = {
     @tailrec
-    def calculateGameStateTail(row: Int, col: Int, currState: GameState): GameState = {
+    def calculateTileCounterTail(row: Int, col: Int, currCounter: TileCounter): TileCounter = {
       if (row >= tilesMatrix.length) {
-        currState
+        currCounter
       }
       else {
         val nextCoords = if ((col + 1) >= tilesMatrix(0).length) {
@@ -39,53 +41,53 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
         }
 
         val currTile = tilesMatrix(row)(col)
-        val nextGameState = currTile match {
-          case Player(_) => new GameState(currState.players.incl((row, col)), currState.crates, currState.targets)
+        val nextCounter = currTile match {
+          case Player(_) => new TileCounter(currCounter.players.incl((row, col)), currCounter.crates, currCounter.targets)
           case Crate(floor) => floor match {
-            case Target() => new GameState(currState.players, currState.crates.incl((row, col)), currState.targets.incl((row, col)))
-            case _ => new GameState(currState.players, currState.crates.incl((row, col)), currState.targets)
+            case Target() => new TileCounter(currCounter.players, currCounter.crates.incl((row, col)), currCounter.targets.incl((row, col)))
+            case _ => new TileCounter(currCounter.players, currCounter.crates.incl((row, col)), currCounter.targets)
           }
-          case Target() => new GameState(currState.players, currState.crates, currState.targets.incl((row, col)))
-          case _ => currState
+          case Target() => new TileCounter(currCounter.players, currCounter.crates, currCounter.targets.incl((row, col)))
+          case _ => currCounter
         }
 
-        calculateGameStateTail(nextCoords._1, nextCoords._2, nextGameState)
+        calculateTileCounterTail(nextCoords._1, nextCoords._2, nextCounter)
       }
     }
 
-    calculateGameStateTail(0, 0, new GameState(HashSet(), HashSet(), HashSet()))
+    calculateTileCounterTail(0, 0, new TileCounter(HashSet(), HashSet(), HashSet()))
   }
 
-  private val gameState = calculateGameState()
+  private val tileCounter = calculateTileCounter()
 
   def mapWidth: Int = tilesMatrix(0).length
 
   def mapHeight: Int = tilesMatrix.length
 
-  def players: HashSet[(Int, Int)] = gameState.players
+  def players: HashSet[(Int, Int)] = tileCounter.players
 
-  def playerPosition: Option[(Int, Int)] = gameState.playerPosition
+  def playerPosition: Option[(Int, Int)] = tileCounter.playerPosition
 
-  def crates: HashSet[(Int, Int)] = gameState.crates
+  def crates: HashSet[(Int, Int)] = tileCounter.crates
 
-  def targets: HashSet[(Int, Int)] = gameState.targets
+  def targets: HashSet[(Int, Int)] = tileCounter.targets
 
   def isValid: Try[Unit] = {
     val mapIsValid: Try[Unit] = Success(()) //TODO Implement map validation
     mapIsValid match {
       case Failure(e) => Failure(e)
       case Success(_) =>
-        val gameStateIsValid = gameState.isValid
+        val gameStateIsValid = tileCounter.isValid
         gameStateIsValid
     }
   }
 
-  def isWon: Boolean = gameState.isWon
+  def isWon: Boolean = tileCounter.isWon
 
   def move(move: Move): Option[Map] = {
     def validPos(pos: (Int, Int)): Boolean = pos._1 >= 0 || pos._1 < mapWidth || pos._2 >= 0 || pos._2 < mapHeight
 
-    gameState.playerPosition match {
+    tileCounter.playerPosition match {
       case None => None
       case Some(pos) =>
         val playerTile = tilesMatrix(pos._1)(pos._2)
@@ -96,21 +98,25 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
           val steppingTile = tilesMatrix(targetPos._1)(targetPos._2)
           if (steppingTile.isTraversable) {
             val playerCurrentFloorTile = playerTile.standingOn.get // safe in all cases
-            tilesMatrix(pos._1)(pos._2) = playerCurrentFloorTile
-            tilesMatrix(targetPos._1)(targetPos._2) = new Player(steppingTile)
-            Some(new Map(tilesMatrix, new MoveOutcome(move, false) :: moves)) //TODO optimize so it doesn't remake game state every time
+            val tilesMatrixNew = tilesMatrix.map(row => row.clone())
+
+            tilesMatrixNew(pos._1)(pos._2) = playerCurrentFloorTile
+            tilesMatrixNew(targetPos._1)(targetPos._2) = new Player(steppingTile)
+            Some(new Map(tilesMatrixNew, new MoveOutcome(move, false) :: moves)) //TODO optimize so it doesn't remake game state every time
           }
           else if (steppingTile.isPushable) {
             val pushedToPos = Move.posAfterMove(targetPos, move)
             val pushedToTile = tilesMatrix(pushedToPos._1)(pushedToPos._2)
             if (pushedToTile.isTraversable) {
               val playerCurrentFloorTile = playerTile.standingOn.get // safe in all cases
-              tilesMatrix(pos._1)(pos._2) = playerCurrentFloorTile
-              tilesMatrix(targetPos._1)(targetPos._2) = new Player(steppingTile.standingOn.get) //safe in all cases
+              val tilesMatrixNew = tilesMatrix.map(row => row.clone())
 
-              tilesMatrix(pushedToPos._1)(pushedToPos._2) = steppingTile.cloneWithNewFloor(pushedToTile)
+              tilesMatrixNew(pos._1)(pos._2) = playerCurrentFloorTile
+              tilesMatrixNew(targetPos._1)(targetPos._2) = new Player(steppingTile.standingOn.get) //safe in all cases
 
-              Some(new Map(tilesMatrix, new MoveOutcome(move, true) :: moves)) //TODO optimize so it doesn't remake game state every time
+              tilesMatrixNew(pushedToPos._1)(pushedToPos._2) = steppingTile.cloneWithNewFloor(pushedToTile)
+
+              Some(new Map(tilesMatrixNew, new MoveOutcome(move, true) :: moves)) //TODO optimize so it doesn't remake game state every time
             }
             else None
           }
@@ -126,25 +132,27 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
     moves match {
       case Nil => None
       case head :: tail => {
+        val tilesMatrixNew = tilesMatrix.map(row => row.clone())
+
         val playerPos = playerPosition.get // is always safe
 
         val playerEarlierPos = Move.posBeforeMove(playerPos, head.move)
 
-        val playerEarlierFloor = tilesMatrix(playerEarlierPos._1)(playerEarlierPos._2)
-        tilesMatrix(playerEarlierPos._1)(playerEarlierPos._2) = new Player(playerEarlierFloor)
+        val playerEarlierFloor = tilesMatrixNew(playerEarlierPos._1)(playerEarlierPos._2)
+        tilesMatrixNew(playerEarlierPos._1)(playerEarlierPos._2) = new Player(playerEarlierFloor)
 
         if (head.objectPushed) {
           val objCurrentPos = Move.posAfterMove(playerPos, head.move)
-          val objCurrentFloor = tilesMatrix(objCurrentPos._1)(objCurrentPos._2).standingOn.get // is always safe
+          val objCurrentFloor = tilesMatrixNew(objCurrentPos._1)(objCurrentPos._2).standingOn.get // is always safe
 
-          val playerCurrentFloor = tilesMatrix(playerPos._1)(playerPos._2).standingOn.get // is always safe
+          val playerCurrentFloor = tilesMatrixNew(playerPos._1)(playerPos._2).standingOn.get // is always safe
 
-          val objNewTile = tilesMatrix(objCurrentPos._1)(objCurrentPos._2).cloneWithNewFloor(playerCurrentFloor)
-          tilesMatrix(playerPos._1)(playerPos._2) = objNewTile
-          tilesMatrix(objCurrentPos._1)(objCurrentPos._2) = objCurrentFloor
+          val objNewTile = tilesMatrixNew(objCurrentPos._1)(objCurrentPos._2).cloneWithNewFloor(playerCurrentFloor)
+          tilesMatrixNew(playerPos._1)(playerPos._2) = objNewTile
+          tilesMatrixNew(objCurrentPos._1)(objCurrentPos._2) = objCurrentFloor
         }
 
-        Some(new Map(tilesMatrix, tail))
+        Some(new Map(tilesMatrixNew, tail))
       }
     }
   }
