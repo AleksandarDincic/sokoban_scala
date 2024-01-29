@@ -9,7 +9,7 @@ class Window {
     title = "Sokoban"
     resizable = false
     contents = new GridPanel(1, 1) {
-      contents += new TestContent
+      contents += new MainMenuContent(Window.this)
     }
     size = new Dimension(800, 600)
 
