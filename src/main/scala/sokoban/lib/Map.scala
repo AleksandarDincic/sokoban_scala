@@ -64,6 +64,8 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
   def mapHeight: Int = tilesMatrix.length
 
+  def tileAt(row: Int, col: Int): Tile = tilesMatrix(row)(col)
+
   def players: HashSet[(Int, Int)] = tileCounter.players
 
   def playerPosition: Option[(Int, Int)] = tileCounter.playerPosition

@@ -16,7 +16,7 @@ abstract class WindowContent(val parent: Window) extends SplitPane(Orientation.V
 
   resizeWeight = RATIO
   dividerSize = 0
-  enabled = false
+  //enabled = false
 
   leftComponent = display
   rightComponent = menu

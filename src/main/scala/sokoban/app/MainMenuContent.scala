@@ -12,7 +12,7 @@ class MainMenuContent private(parent: sokoban.app.Window, val mapChoicePanelWrap
   override protected def createDisplay(): Panel = new BorderPanel {
     val titleLabel = new Label {
       text = "Sokoban"
-      font = new Font(Font.Serif, Font.Bold.id, 72)
+      font = new Font(Font.Monospaced, Font.Bold.id, 72)
     }
     add(titleLabel, BorderPanel.Position.Center)
   }
