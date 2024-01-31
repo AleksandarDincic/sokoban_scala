@@ -4,7 +4,7 @@ import sokoban.lib.Map
 
 import java.io.File
 import scala.swing.event.ButtonClicked
-import scala.swing.{BorderPanel, BoxPanel, Button, ComboBox, Dialog, FileChooser, FlowPanel, Label, Orientation}
+import scala.swing.{BorderPanel, BoxPanel, Button, ComboBox, Dialog, FileChooser, FlowPanel, GridPanel, Label, Orientation, Panel}
 import scala.util.{Failure, Success}
 
 class MapChoicePanel(val parent: MainMenuContent, val maps: List[MapFromFile]) extends BorderPanel {
@@ -12,9 +12,14 @@ class MapChoicePanel(val parent: MainMenuContent, val maps: List[MapFromFile]) e
   add(mapsLabel, BorderPanel.Position.North)
 
   val mapsDropdown = new ComboBox[MapFromFile](maps)
-  add(mapsDropdown, BorderPanel.Position.Center)
+  val mapsDropdownPanel = new GridPanel(0, 1) {
+    contents += new Panel {}
+    contents += mapsDropdown
+    contents += new Panel {}
+  }
+  add(mapsDropdownPanel, BorderPanel.Position.Center)
 
-  val loadButton = new Button("Load") {
+  val loadButton = new Button("Load from File") {
     reactions += {
       case ButtonClicked(_) => {
         println("pressed Load button")
@@ -32,7 +37,7 @@ class MapChoicePanel(val parent: MainMenuContent, val maps: List[MapFromFile]) e
               parent.addMapToDropdown(mapFromFile)
             }
             case Failure(e) => {
-              Dialog.showMessage(this, "Failed to load the map:\n" + e.getMessage, "Failure", Dialog.Message.Error)
+              Dialog.showMessage(this, "Failed to load the map:\n" + e.getMessage, "Error", Dialog.Message.Error)
             }
           }
         }

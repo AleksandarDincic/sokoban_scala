@@ -3,15 +3,38 @@ package sokoban.app
 import scala.swing.{Dimension, GridPanel, MainFrame}
 import sokoban.lib.Map
 
+import scala.collection.mutable
+
 class Window {
+
+  val contentStack = mutable.Stack[WindowContent]()
+
+  contentStack.push(new MainMenuContent(Window.this))
+
   val frame = new MainFrame {
     title = "Sokoban"
     resizable = false
-    contents = new GridPanel(1, 1) {
-      //contents += new MainMenuContent(Window.this)
-      contents += new PlayGameContent(Window.this, Map.mapFromFile("bigboy.txt").get)
-    }
-    size = new Dimension(800, 600)
+    contents = contentStack.head
+    minimumSize = new Dimension(800,600)
+
+  }
+
+  private def refreshContent(): Unit = {
+    val currentContent = contentStack.head
+    frame.contents = currentContent
+    frame.validate()
+    frame.repaint()
+    currentContent.requestFocus()
+  }
+
+  def pushNewContent(content: WindowContent): Unit = {
+    contentStack.push(content)
+    refreshContent()
+  }
+
+  def popContent(): Unit = {
+    contentStack.pop()
+    refreshContent()
   }
 
   def setVisible(visible: Boolean): Unit = {

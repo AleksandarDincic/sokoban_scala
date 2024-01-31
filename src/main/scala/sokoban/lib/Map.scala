@@ -74,6 +74,8 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
   def targets: HashSet[(Int, Int)] = tileCounter.targets
 
+  def numberOfMoves: Int = moves.size
+
   def isValid: Try[Unit] = {
     val mapIsValid: Try[Unit] = Success(()) //TODO Implement map validation
     mapIsValid match {
@@ -143,15 +145,18 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
         val playerEarlierFloor = tilesMatrixNew(playerEarlierPos._1)(playerEarlierPos._2)
         tilesMatrixNew(playerEarlierPos._1)(playerEarlierPos._2) = new Player(playerEarlierFloor)
 
+        val playerCurrentFloor = tilesMatrixNew(playerPos._1)(playerPos._2).standingOn.get // is always safe
+
         if (head.objectPushed) {
           val objCurrentPos = Move.posAfterMove(playerPos, head.move)
           val objCurrentFloor = tilesMatrixNew(objCurrentPos._1)(objCurrentPos._2).standingOn.get // is always safe
 
-          val playerCurrentFloor = tilesMatrixNew(playerPos._1)(playerPos._2).standingOn.get // is always safe
-
           val objNewTile = tilesMatrixNew(objCurrentPos._1)(objCurrentPos._2).cloneWithNewFloor(playerCurrentFloor)
           tilesMatrixNew(playerPos._1)(playerPos._2) = objNewTile
           tilesMatrixNew(objCurrentPos._1)(objCurrentPos._2) = objCurrentFloor
+        }
+        else {
+          tilesMatrixNew(playerPos._1)(playerPos._2) = playerCurrentFloor
         }
 
         Some(new Map(tilesMatrixNew, tail))
