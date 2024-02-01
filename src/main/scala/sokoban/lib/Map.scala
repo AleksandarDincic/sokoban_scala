@@ -76,13 +76,45 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
   def numberOfMoves: Int = moves.size
 
+  private def isEnclosed: Try[Unit] = {
+
+    val moves: List[Move] = List(Up(), Down(), Left(), Right())
+
+    @tailrec
+    def isEnclosedTail(stack: List[(Int, Int)], visited: HashSet[(Int, Int)]): Try[Unit] = stack match {
+      case Nil => Success(())
+      case pos :: tail => {
+        if (pos._1 < 0 || pos._1 >= mapHeight || pos._2 < 0 || pos._2 >= mapWidth) {
+          Failure(new Throwable("The map is not enclosed"))
+        }
+        else {
+          val traversable = tilesMatrix(pos._1)(pos._2) match {
+            case Crate(floor) => floor.isTraversable
+            case Player(floor) => floor.isTraversable
+            case t => t.isTraversable
+          }
+          if (!traversable) {
+            isEnclosedTail(tail, visited + pos)
+          }
+          else {
+            val movesFromPos = moves.map(move => Move.posAfterMove(pos, move)).filter(p => !visited.contains(p))
+            isEnclosedTail(movesFromPos ::: tail, visited + pos)
+          }
+        }
+      }
+    }
+
+    playerPosition match {
+      case None => Failure(new Throwable("No player on the map"))
+      case Some(playerPos) => isEnclosedTail(List(playerPos), HashSet())
+    }
+  }
+
   def isValid: Try[Unit] = {
-    val mapIsValid: Try[Unit] = Success(()) //TODO Implement map validation
-    mapIsValid match {
+    tileCounter.isValid match {
       case Failure(e) => Failure(e)
       case Success(_) =>
-        val gameStateIsValid = tileCounter.isValid
-        gameStateIsValid
+        isEnclosed
     }
   }
 
