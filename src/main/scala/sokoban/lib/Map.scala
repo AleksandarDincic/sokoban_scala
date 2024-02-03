@@ -42,7 +42,10 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
         val currTile = tilesMatrix(row)(col)
         val nextCounter = currTile match {
-          case Player(_) => new TileCounter(currCounter.players.incl((row, col)), currCounter.crates, currCounter.targets)
+          case Player(floor) => floor match {
+            case Target() => new TileCounter(currCounter.players.incl((row, col)), currCounter.crates, currCounter.targets.incl((row, col)))
+            case _ => new TileCounter(currCounter.players.incl((row, col)), currCounter.crates, currCounter.targets)
+          }
           case Crate(floor) => floor match {
             case Target() => new TileCounter(currCounter.players, currCounter.crates.incl((row, col)), currCounter.targets.incl((row, col)))
             case _ => new TileCounter(currCounter.players, currCounter.crates.incl((row, col)), currCounter.targets)
@@ -76,9 +79,13 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
   def numberOfMoves: Int = moves.size
 
-  private def isEnclosed: Try[Unit] = {
+  def traversableFloor(pos: (Int, Int)): Boolean = tileAt(pos._1, pos._2) match {
+    case Crate(floor) => floor.isTraversable
+    case Player(floor) => floor.isTraversable
+    case t => t.isTraversable
+  }
 
-    val moves: List[Move] = List(Up(), Down(), Left(), Right())
+  private def isEnclosed: Try[Unit] = {
 
     @tailrec
     def isEnclosedTail(stack: List[(Int, Int)], visited: HashSet[(Int, Int)]): Try[Unit] = stack match {
@@ -97,7 +104,7 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
             isEnclosedTail(tail, visited + pos)
           }
           else {
-            val movesFromPos = moves.map(move => Move.posAfterMove(pos, move)).filter(p => !visited.contains(p))
+            val movesFromPos = Move.allMoves.map(move => Move.posAfterMove(pos, move)).filter(p => !visited.contains(p))
             isEnclosedTail(movesFromPos ::: tail, visited + pos)
           }
         }

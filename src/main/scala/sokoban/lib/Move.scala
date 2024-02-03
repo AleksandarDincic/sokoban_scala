@@ -26,6 +26,8 @@ object Move {
     val moveDelta = move.movementInCoords
     (pos._1 - moveDelta._1, pos._2 - moveDelta._2)
   }
+
+  val allMoves: List[Move] = List(Up(), Down(), Left(), Right())
 }
 
 case class Up() extends Move {

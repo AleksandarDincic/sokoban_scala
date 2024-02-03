@@ -9,8 +9,9 @@ class MapTilePanel(dim: Int) extends GridPanel(0, 1) {
   background = COLOR_BG
   val tileSymbolLabel = new Label(Floor.SYMBOL_FLOOR.toString) {
     foreground = COLOR_FLOOR
-    val fontSize: Int = 117 - 5 * dim
-    font = new Font(Font.Monospaced, Font.Bold.id, fontSize) //15x15 => 42; 9x9 => 72; diff per size = 5
+    val fontSize = 117 - 5 * dim
+    val realFontSize: Int = if (fontSize >= 0) fontSize else 2
+    font = new Font(Font.Monospaced, Font.Bold.id, realFontSize) //15x15 => 42; 9x9 => 72; diff per size = 5
   }
   contents += tileSymbolLabel
 
