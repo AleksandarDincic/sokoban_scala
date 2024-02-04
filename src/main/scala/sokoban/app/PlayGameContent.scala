@@ -1,16 +1,22 @@
 package sokoban.app
 
-import sokoban.app.PlayGameContent.{INSTRUCTIONS, MOVES_PREFIX, keyToCommand}
-import sokoban.lib.{Down, Left, Map, Move, Right, Up}
+import sokoban.app.PlayGameContent.{INSTRUCTIONS, MOVES_PREFIX, MSG_PLAYING, MSG_SOLVING, keyToCommand}
+import sokoban.lib.{Down, Left, Map, Move, Right, Solver, Up}
 
 import java.awt.Color
+import java.io.File
+import javax.swing.SwingUtilities
 import javax.swing.border.{Border, LineBorder}
-import scala.swing.{Alignment, BorderPanel, Button, Dialog, Font, GridPanel, Label, Panel}
+import scala.annotation.tailrec
+import scala.concurrent.Future
+import scala.swing.{Alignment, BorderPanel, Button, Dialog, FileChooser, Font, GridPanel, Label, Panel}
 import scala.swing.event.{ButtonClicked, Key, KeyPressed, KeyTyped, MousePressed}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
-class PlayGameContent private(parent: Window, map: Map, val mapPanelWrapper: GridPanel, val movesLabel: Label) extends WindowContent(parent) {
+class PlayGameContent private(parent: Window, map: Map, val mapPanelWrapper: GridPanel, val movesLabel: Label, val messageLabel: Label) extends WindowContent(parent) {
 
-  def this(parent: Window, map: Map) = this(parent, map, new GridPanel(0, 1), new Label(MOVES_PREFIX + 0))
+  def this(parent: Window, map: Map) = this(parent, map, new GridPanel(0, 1), new Label(MOVES_PREFIX + 0), new Label(""))
 
   mapPanelWrapper.contents += new MapPanel(map)
 
@@ -34,48 +40,145 @@ class PlayGameContent private(parent: Window, map: Map, val mapPanelWrapper: Gri
 
     contents += new GridPanel(0, 1) {
       vGap = 15
-      val movesFromFileButton = new Button("Moves from File") {
+      val movesFromFileButton = new Button("Moves from File") {}
+      val solveButton = new Button("Solve") {}
+      val mainMenuButton = new Button("Main menu") {}
+      movesFromFileButton.reactions += {
+        case ButtonClicked(_) => {
+          val fileChooser = new FileChooser(new File(System.getProperty("user.dir"))) {
 
-      }
-      contents += movesFromFileButton
-      val solveButton = new Button("Solve") {
+            fileSelectionMode = FileChooser.SelectionMode.FilesOnly
+            multiSelectionEnabled = false
+          }
+          val chooseResult = fileChooser.showDialog(PlayGameContent.this, "Select a moves file")
+          if (chooseResult == FileChooser.Result.Approve) {
+            SolutionFile.fileToMoves(fileChooser.selectedFile.getAbsolutePath) match {
+              case Failure(e) => Dialog.showMessage(PlayGameContent.this, "Error while loading moves:\n" + e.getMessage, "Error", Dialog.Message.Error)
+              case Success(moves) => {
+                movesFromFileButton.enabled = false
+                solveButton.enabled = false
+                mainMenuButton.enabled = false
+                PlayGameContent.this.enabled = false
+                messageLabel.text = MSG_PLAYING
 
-      }
-      contents += solveButton
-      val mainMenuButton = new Button("Main menu") {
-        reactions += {
-          case ButtonClicked(_) => {
-            parent.popContent()
+                val solverFuture = Future {
+                  @tailrec
+                  def playMoveTail(moves: List[Move]): Unit = moves match {
+                    case Nil => ()
+                    case m :: t => {
+                      PlayGameContent.this.move(m) match {
+                        case Some(map) => SwingUtilities.invokeLater(() => refreshMap(map))
+                        case None => {}
+                      }
+                      Thread.sleep(PlayGameContent.DELAY_BETWEEN_MOVES)
+                      playMoveTail(t)
+                    }
+                  }
+
+                  playMoveTail(moves)
+                }
+
+                solverFuture.onComplete(res => {
+                  movesFromFileButton.enabled = true
+                  solveButton.enabled = true
+                  mainMenuButton.enabled = true
+                  PlayGameContent.this.enabled = true
+                  PlayGameContent.this.requestFocus()
+                  messageLabel.text = ""
+                })
+              }
+            }
           }
         }
       }
+
+      solveButton.reactions += {
+        case ButtonClicked(_) => {
+          movesFromFileButton.enabled = false
+          solveButton.enabled = false
+          mainMenuButton.enabled = false
+          PlayGameContent.this.enabled = false
+          messageLabel.text = MSG_SOLVING
+
+          val solverFuture = Future {
+            new Solver(PlayGameContent.this.currentMap).solve()
+          }
+
+          solverFuture.onComplete(solution => {
+            movesFromFileButton.enabled = true
+            solveButton.enabled = true
+            mainMenuButton.enabled = true
+            PlayGameContent.this.enabled = true
+            PlayGameContent.this.requestFocus()
+            messageLabel.text = ""
+            solution match {
+              case Failure(exception) => {
+                Dialog.showMessage(PlayGameContent.this, "Error while solving:\n" + exception.getMessage, "Error", Dialog.Message.Error)
+              }
+              case Success(solution) => solution match {
+                case None => Dialog.showMessage(PlayGameContent.this, "No solutions found.", "Message", Dialog.Message.Plain)
+                case Some(moves) => {
+                  Dialog.showMessage(PlayGameContent.this, "A solution has been found! You will now be prompted where to save it.", "Message", Dialog.Message.Plain)
+
+                  val fileChooser = new FileChooser(new File(System.getProperty("user.dir"))) {
+                    fileSelectionMode = FileChooser.SelectionMode.FilesOnly
+                    multiSelectionEnabled = false
+                  }
+                  val chooseResult = fileChooser.showDialog(PlayGameContent.this, "Save")
+                  if (chooseResult == FileChooser.Result.Approve) {
+                    SolutionFile.movesToFile(moves, fileChooser.selectedFile.getAbsolutePath) match {
+                      case Success(_) => {}
+                      case Failure(e) => Dialog.showMessage(PlayGameContent.this, "Error while saving:\n" + e.getMessage, "Error", Dialog.Message.Error)
+                    }
+                  }
+                }
+              }
+            }
+          })
+        }
+      }
+
+      mainMenuButton.reactions += {
+        case ButtonClicked(_) => {
+          parent.popContent()
+        }
+      }
+
+      contents += movesFromFileButton
+      contents += solveButton
       contents += mainMenuButton
     }
 
-    contents += new Panel {}
-  }
-
-  def refreshMap(map: Map): Unit = {
-    mapPanelWrapper.contents.clear()
-    mapPanelWrapper.contents += new MapPanel(map)
-
-    movesLabel.text = MOVES_PREFIX + map.numberOfMoves
-    revalidate()
-
-    if (map.isWon) {
-      Dialog.showMessage(this, "You win!", "Message", Dialog.Message.Plain)
-      parent.popContent()
+    contents += new BorderPanel {
+      add(messageLabel, BorderPanel.Position.Center)
     }
   }
 
+  def refreshMap(map: Map): Unit = {
+    synchronized {
+      mapPanelWrapper.contents.clear()
+      mapPanelWrapper.contents += new MapPanel(map)
+
+      movesLabel.text = MOVES_PREFIX + map.numberOfMoves
+      revalidate()
+
+      if (map.isWon) {
+        Dialog.showMessage(this, "You win!", "Message", Dialog.Message.Plain)
+        parent.popContent()
+      }
+    }
+  }
+
+  def currentMap: Map = {
+    mapPanelWrapper.contents.head.asInstanceOf[MapPanel].map //always safe
+  }
+
   def move(move: Move): Option[Map] = {
-    val mapPanel = mapPanelWrapper.contents.head.asInstanceOf[MapPanel] //always safe
-    mapPanel.map.move(move)
+    currentMap.move(move)
   }
 
   def undo(): Option[Map] = {
-    val mapPanel = mapPanelWrapper.contents.head.asInstanceOf[MapPanel] //always safe
-    mapPanel.map.undo()
+    currentMap.undo()
   }
 
   listenTo(keys)
@@ -103,8 +206,12 @@ class PlayGameContent private(parent: Window, map: Map, val mapPanelWrapper: Gri
 
 object PlayGameContent {
 
+  val DELAY_BETWEEN_MOVES = 200
+
   val INSTRUCTIONS = "<html>Legend<hr>- : floor   # : wall<br>S : player  X : crate<br>. : target O : crate on target<hr>Controls<hr>WASD : Move Z : Undo"
   val MOVES_PREFIX = "Moves: "
+  val MSG_SOLVING = "Solving..."
+  val MSG_PLAYING = "Playing moves from file..."
 
   val UP_KEY = Key.W
   val DOWN_KEY = Key.S

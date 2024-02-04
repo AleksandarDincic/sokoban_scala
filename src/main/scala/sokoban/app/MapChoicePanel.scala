@@ -22,7 +22,6 @@ class MapChoicePanel(val parent: MainMenuContent, val maps: List[MapFromFile]) e
   val loadButton = new Button("Load from File") {
     reactions += {
       case ButtonClicked(_) => {
-        println("pressed Load button")
         val fileChooser = new FileChooser(new File(System.getProperty("user.dir"))) {
 
           fileSelectionMode = FileChooser.SelectionMode.FilesOnly

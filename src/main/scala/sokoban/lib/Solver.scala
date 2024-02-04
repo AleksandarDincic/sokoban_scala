@@ -59,7 +59,7 @@ class Solver(val map: Map) {
     }
 
     for (row <- deadlockArr.indices; col <- deadlockArr(row).indices) {
-      deadlockArr(row)(col) = pushDistances.values.forall(matrix => matrix(row)(col) >= 0)
+      deadlockArr(row)(col) = pushDistances.values.exists(matrix => matrix(row)(col) >= 0)
     }
 
     deadlockArr
@@ -123,7 +123,11 @@ class Solver(val map: Map) {
           val reachableTargets = distancesFromTarget.filter((kv) => kv._2 >= 0)
 
           if (reachableTargets.isEmpty) {
-            -1
+            val distancesFromAllTargets = HashMap
+              .from(map.targets.map(t => t -> pushDistances(t)(currCrate._1)(currCrate._2)))
+              .filter(kv => kv._2 >= 0)
+            val selectedTarget = distancesFromAllTargets.minBy(kv => kv._2)
+            heuristicTail(cnt + selectedTarget._2, crates - currCrate, targets - selectedTarget._1)
           }
           else {
             val selectedTarget = distancesFromTarget.minBy(kv => kv._2)
@@ -132,13 +136,19 @@ class Solver(val map: Map) {
         }
       }
 
-      heuristicTail(steps, map.crates, map.targets)
+      if (map.crates.exists(crate => {
+        !simpleDeadlocks(crate._1)(crate._2)
+      })) {
+        //println("ded lock")
+        -1
+      }
+      else {
+        heuristicTail(steps, map.crates, map.targets)
+      }
     }
 
     val deadlock: Boolean = {
-      map.crates.exists((crate) => {
-        !simpleDeadlocks(crate._1)(crate._2)
-      })
+      heuristic == -1
     }
 
     override val hashCode: Int = (this.map.crates, this.map.playerPosition).hashCode()
@@ -172,15 +182,28 @@ class Solver(val map: Map) {
             }
             else {
               //println(currentState.map.toString + "heuristic: " + currentState.heuristic)
-              //Thread.sleep(100)
+              //Thread.sleep(1000)
               if (currentState.map.isWon) {
                 Some(currentState.map.moves.map(moveOutcome => moveOutcome.move).reverse)
               }
               else {
                 val newStates = getPossiblePushes(currentState.map)
+                  /*.map(pushes => {
+                    println("possible pushes: " + pushes.moves)
+                    pushes
+                  })*/
                   .map(pushes => (pushes.moves.foldLeft(currentState.map)((m, mv) => m.move(mv).get), pushes.moves.size))
                   .map(ms => new SolverState(ms._1, currentState.steps + ms._2))
+                  /*.map(s => {
+                    println("possible states: " + s.map)
+                    s
+                  })*/
                   .filter(s => !visited.contains(s))
+                  /*.map(s => {
+                    println("possible states after removing visited: " + s.map)
+                    println("heuristic" + s.heuristic)
+                    s
+                  })*/
                   .filter(s => !s.deadlock)
 
                 solveTail(queue ++= newStates, visited + currentState)
