@@ -1,5 +1,7 @@
 package sokoban.lib
 
+import sokoban.lib.operations.Operation
+
 import scala.annotation.tailrec
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.ListBuffer
@@ -79,6 +81,8 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
   def numberOfMoves: Int = moves.size
 
+  def cloneTileMatrix: Array[Array[Tile]] = tilesMatrix.map(row => row.clone())
+
   def traversableFloor(pos: (Int, Int)): Boolean = tileAt(pos._1, pos._2) match {
     case Crate(floor) => floor.isTraversable
     case Player(floor) => floor.isTraversable
@@ -141,7 +145,7 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
           val steppingTile = tilesMatrix(targetPos._1)(targetPos._2)
           if (steppingTile.isTraversable) {
             val playerCurrentFloorTile = playerTile.standingOn.get // safe in all cases
-            val tilesMatrixNew = tilesMatrix.map(row => row.clone())
+            val tilesMatrixNew = cloneTileMatrix
 
             tilesMatrixNew(pos._1)(pos._2) = playerCurrentFloorTile
             tilesMatrixNew(targetPos._1)(targetPos._2) = new Player(steppingTile)
@@ -175,7 +179,7 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
     moves match {
       case Nil => None
       case head :: tail => {
-        val tilesMatrixNew = tilesMatrix.map(row => row.clone())
+        val tilesMatrixNew = cloneTileMatrix
 
         val playerPos = playerPosition.get // is always safe
 
@@ -200,6 +204,14 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
         Some(new Map(tilesMatrixNew, tail))
       }
+    }
+  }
+
+  def performOperation(operation: Operation): Try[Map] = {
+    val tilesMatrixNew = cloneTileMatrix
+    operation.operationBody(tilesMatrixNew) match {
+      case Success(m) => Success(new Map(m))
+      case Failure(e) => Failure(e)
     }
   }
 

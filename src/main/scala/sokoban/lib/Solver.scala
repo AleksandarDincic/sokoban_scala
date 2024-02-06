@@ -174,6 +174,10 @@ class Solver(val map: Map) {
 
         @tailrec
         def solveTail(queue: mutable.PriorityQueue[SolverState], visited: HashSet[SolverState]): Option[List[Move]] = {
+          if (visited.size % 500 == 0) {
+            println("Visited " + visited.size)
+          }
+
           if (queue.isEmpty) None
           else {
             val currentState = queue.dequeue()
