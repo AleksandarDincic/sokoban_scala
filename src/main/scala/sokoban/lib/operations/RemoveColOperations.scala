@@ -1,11 +1,12 @@
 package sokoban.lib.operations
 
 import sokoban.lib.Tile
+import sokoban.lib.operations.RowColChangePos.RowColChangePos
 
 import scala.util.{Failure, Success, Try}
 
 trait RemoveColOperations extends Operation {
-  def removePos: RowColChangePos.Value
+  def removePos: RowColChangePos
 
   override final def isValidInput: Try[Unit] = Success(())
 

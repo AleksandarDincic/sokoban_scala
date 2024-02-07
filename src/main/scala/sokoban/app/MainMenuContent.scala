@@ -3,6 +3,7 @@ package sokoban.app
 import scala.swing._
 import scala.swing.event.ButtonClicked
 import scala.util.{Failure, Success}
+import sokoban.lib.Map
 
 class MainMenuContent private(parent: sokoban.app.Window, val mapChoicePanelWrapper: GridPanel) extends WindowContent(parent) {
   def this(parent: sokoban.app.Window) = this(parent, new GridPanel(0, 1) {})
@@ -62,7 +63,18 @@ class MainMenuContent private(parent: sokoban.app.Window, val mapChoicePanelWrap
         }
       }
       val editButton = new Button("Edit") {
-
+        reactions += {
+          case ButtonClicked(_) => {
+            val currMapChoicePanel = mapChoicePanel
+            val currMap = if (currMapChoicePanel.maps.isEmpty) {
+              new MapFromFile(new Map(Array()), "empty")
+            }
+            else {
+              currMapChoicePanel.mapsDropdown.selection.item
+            }
+            parent.pushNewContent(new EditMapContent(parent, currMap.map))
+          }
+        }
       }
       val exitButton = new Button("Exit") {
         reactions += {

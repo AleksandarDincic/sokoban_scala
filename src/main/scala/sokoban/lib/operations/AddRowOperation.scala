@@ -1,11 +1,12 @@
 package sokoban.lib.operations
 
+import sokoban.lib.operations.RowColChangePos.RowColChangePos
 import sokoban.lib.{Floor, Tile}
 
 import scala.util.{Success, Try}
 
 trait AddRowOperation extends Operation {
-  def addPos: RowColChangePos.Value
+  def addPos: RowColChangePos
 
   override final def isValidInput: Try[Unit] = Success(())
 
