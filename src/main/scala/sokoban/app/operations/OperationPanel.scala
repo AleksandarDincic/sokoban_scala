@@ -7,11 +7,11 @@ import scala.swing.event.ButtonClicked
 
 abstract class OperationPanel extends BorderPanel with Operation {
 
-  val prevButton: Button = new Button("<-") {
+  val prevButton: Button = new Button("<=") {
     enabled = false
   }
   val operationNumLabel = new Label(operationNumLabelString(1))
-  val nextButton: Button = new Button("->") {
+  val nextButton: Button = new Button("=>") {
     enabled = numOfOperations > 1
   }
   val buttonsPanel = new GridPanel(1, 0) {

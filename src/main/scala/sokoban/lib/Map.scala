@@ -213,10 +213,15 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
   }
 
   def performOperation(operation: Operation): Try[Map] = {
-    val tilesMatrixNew = cloneTileMatrix
-    operation.operationBody(tilesMatrixNew) match {
-      case Success(m) => Success(new Map(m))
+    operation.isValidInput match {
       case Failure(e) => Failure(e)
+      case Success(_) => {
+        val tilesMatrixNew = cloneTileMatrix
+        operation.operationBody(tilesMatrixNew) match {
+          case Success(m) => Success(new Map(m))
+          case Failure(e) => Failure(e)
+        }
+      }
     }
   }
 

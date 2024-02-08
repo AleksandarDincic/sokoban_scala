@@ -8,7 +8,7 @@ import scala.util.{Success, Try}
 trait AddRowOperation extends Operation {
   def addPos: RowColChangePos
 
-  override final def isValidInput: Try[Unit] = Success(())
+  override def isValidInput: Try[Unit] = Success(())
 
   override final def operationBody(tilesMatrix: Array[Array[Tile]]): Try[Array[Array[Tile]]] = {
     val newRow: Array[Tile] = if (tilesMatrix.isEmpty) {

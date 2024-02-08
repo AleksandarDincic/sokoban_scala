@@ -8,7 +8,7 @@ import scala.util.{Failure, Success, Try}
 trait RemoveRowOperation extends Operation {
   def removePos: RowColChangePos
 
-  override final def isValidInput: Try[Unit] = Success(())
+  override def isValidInput: Try[Unit] = Success(())
 
   override final def operationBody(tilesMatrix: Array[Array[Tile]]): Try[Array[Array[Tile]]] = {
     if (tilesMatrix.isEmpty) {

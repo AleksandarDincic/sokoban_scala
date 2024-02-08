@@ -10,5 +10,6 @@ object OperationFactory {
     new OperationFactory(() => new AddColOperationPanel(), "Add column"),
     new OperationFactory(() => new RemoveRowOperationPanel(), "Remove row"),
     new OperationFactory(() => new RemoveColOperationPanel(), "Remove column"),
+    new OperationFactory(() => new SetTileOperationPanel(), "Set tile"),
   )
 }
