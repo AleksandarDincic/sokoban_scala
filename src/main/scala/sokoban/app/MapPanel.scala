@@ -4,7 +4,10 @@ import sokoban.lib.Map
 
 import scala.swing.{GridPanel, Label}
 
-class MapPanel(val map: Map) extends GridPanel(map.mapHeight, if (map.mapHeight == 0 && map.mapWidth == 0) 1 else map.mapWidth) {
+class MapPanel(val map: Map) extends GridPanel(
+  if (map.mapHeight == 0 || map.mapWidth == 0) 0 else map.mapHeight,
+  if (map.mapHeight == 0 || map.mapWidth == 0) 1 else map.mapWidth
+) {
   background = MapTilePanel.COLOR_BG
   if (map.mapWidth != 0 && map.mapHeight != 0) {
     val maxDim = if (map.mapHeight < map.mapWidth) map.mapWidth else map.mapHeight

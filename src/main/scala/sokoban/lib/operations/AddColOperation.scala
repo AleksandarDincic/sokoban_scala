@@ -12,10 +12,10 @@ trait AddColOperation extends Operation {
 
   override final def operationBody(tilesMatrix: Array[Array[Tile]]): Try[Array[Array[Tile]]] = addPos match {
     case RowColChangePos.AtStart => {
-      Success(tilesMatrix.map(row => row ++ Array(new Floor())))
+      Success(tilesMatrix.map(row => Array(new Floor()) ++ row))
     }
     case RowColChangePos.AtEnd => {
-      Success(tilesMatrix.map(row => Array(new Floor()) ++ row))
+      Success(tilesMatrix.map(row => row ++ Array(new Floor())))
     }
   }
 }

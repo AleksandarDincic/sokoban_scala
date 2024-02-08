@@ -5,7 +5,7 @@ import sokoban.lib.operations.RowColChangePos.RowColChangePos
 
 import scala.util.{Failure, Success, Try}
 
-trait RemoveColOperations extends Operation {
+trait RemoveColOperation extends Operation {
   def removePos: RowColChangePos
 
   override final def isValidInput: Try[Unit] = Success(())

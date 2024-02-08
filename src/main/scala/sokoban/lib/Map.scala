@@ -60,7 +60,12 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
       }
     }
 
-    calculateTileCounterTail(0, 0, new TileCounter(HashSet(), HashSet(), HashSet())) //TODO fix adding row to empty map
+    if (mapWidth == 0 || mapHeight == 0) {
+      new TileCounter(HashSet(), HashSet(), HashSet())
+    }
+    else {
+      calculateTileCounterTail(0, 0, new TileCounter(HashSet(), HashSet(), HashSet())) //TODO fix adding row to empty map
+    }
   }
 
   private val tileCounter = calculateTileCounter()
