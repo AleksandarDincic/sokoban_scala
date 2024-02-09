@@ -12,5 +12,6 @@ object OperationFactory {
     new OperationFactory(() => new RemoveColOperationPanel(), "Remove column"),
     new OperationFactory(() => new SetTileOperationPanel(), "Set tile"),
     new OperationFactory(() => new InversionOperationPanel(), "Inversion"),
+    new OperationFactory(() => new MinimizeWallsOperationPanel(), "Minimize walls"),
   )
 }
