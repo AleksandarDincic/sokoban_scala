@@ -13,5 +13,6 @@ object OperationFactory {
     new OperationFactory(() => new SetTileOperationPanel(), "Set tile"),
     new OperationFactory(() => new InversionOperationPanel(), "Inversion"),
     new OperationFactory(() => new MinimizeWallsOperationPanel(), "Minimize walls"),
+    new OperationFactory(() => new FractalizationOperationPanel(), "Fractalization"),
   )
 }

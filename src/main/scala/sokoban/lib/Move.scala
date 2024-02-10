@@ -4,6 +4,7 @@ import scala.util.{Failure, Success, Try}
 
 sealed abstract class Move {
   def movementInCoords: (Int, Int)
+
   def symbol: Char
 
 }
@@ -28,6 +29,12 @@ object Move {
   }
 
   val allMoves: List[Move] = List(Up(), Down(), Left(), Right())
+  val diagonalMoves: List[(Move, Move)] = List(
+    (Up(), Left()),
+    (Up(), Right()),
+    (Down(), Left()),
+    (Down(), Right()),
+  )
 }
 
 case class Up() extends Move {
