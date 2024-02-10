@@ -5,6 +5,8 @@ import sokoban.app.MapTilePanel.{COLOR_BG, COLOR_FLOOR}
 import scala.swing.{Color, Font, GridPanel, Label}
 import sokoban.lib.{Crate, Floor, Player, Target, Tile, Wall}
 
+import scala.swing.event.MousePressed
+
 class MapTilePanel(dim: Int) extends GridPanel(0, 1) {
   background = COLOR_BG
   val tileSymbolLabel = new Label(Floor.SYMBOL_FLOOR.toString) {
@@ -20,8 +22,6 @@ class MapTilePanel(dim: Int) extends GridPanel(0, 1) {
     tileSymbolLabel.foreground = MapTilePanel.colorFromTile(tile)
   }
 }
-
-//TODO selectable via click!
 
 object MapTilePanel {
   val COLOR_BG = new Color(20, 20, 20)

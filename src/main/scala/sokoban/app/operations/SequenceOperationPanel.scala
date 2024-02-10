@@ -2,7 +2,7 @@ package sokoban.app.operations
 
 import sokoban.lib.operations.SequenceOperation
 
-import scala.swing.Panel
+import scala.swing.{Dialog, Panel}
 
 class SequenceOperationPanel private(override val operations: List[OperationPanel], operationsFlattened: List[Panel]) extends OperationPanel with SequenceOperation {
 
@@ -15,6 +15,6 @@ class SequenceOperationPanel private(override val operations: List[OperationPane
   override def numOfOperations: Int = operationsFlattened.size
 
   override def errorCallback(e: Throwable): Unit = {
-    //TODO fill in
+    Dialog.showMessage(this, e.getMessage, "Error", Dialog.Message.Error)
   }
 }

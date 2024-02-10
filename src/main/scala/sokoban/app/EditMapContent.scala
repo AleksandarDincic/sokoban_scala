@@ -1,6 +1,6 @@
 package sokoban.app
 
-import scala.swing.{GridPanel, Panel}
+import scala.swing.{Dialog, GridPanel, Panel}
 import sokoban.lib.Map
 import sokoban.lib.operations.Operation
 
@@ -24,10 +24,14 @@ class EditMapContent private(parent: Window, map: Map, val mapPanelWrapper: Grid
         revalidate()
       }
       case Failure(e) => {
-        println(e)
+        Dialog.showMessage(this, e.getMessage, "Error", Dialog.Message.Error)
       }
     }
 
+  }
+
+  def backToMainMenu: Unit = {
+    parent.popContent()
   }
 
   override protected def createDisplay(): Panel = mapPanelWrapper

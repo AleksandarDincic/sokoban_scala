@@ -3,8 +3,10 @@ package sokoban.app
 import sokoban.app
 import sokoban.app.operations.{AddRowOperationPanel, OperationFactory, OperationPanel}
 
+import java.io.File
 import scala.swing.event.ButtonClicked
-import scala.swing.{BorderPanel, Button, GridPanel, Label, ScrollPane, TextField}
+import scala.swing.{BorderPanel, Button, Dialog, FileChooser, GridPanel, Label, ScrollPane, TextField}
+import scala.util.{Failure, Success}
 
 class EditMapMenu(val parent: EditMapContent) extends GridPanel(0, 1) {
 
@@ -26,7 +28,7 @@ class EditMapMenu(val parent: EditMapContent) extends GridPanel(0, 1) {
     reactions += {
       case ButtonClicked(_) => {
         if (bufferOperationNameField.text.trim.isEmpty) {
-          //TODO fill in
+          Dialog.showMessage(this, "You must enter a name for the new operation", "Error", Dialog.Message.Error)
         }
         else {
           val newFactory = operationsBufferWrapper.contents.head.asInstanceOf[ScrollPane].contents.head.asInstanceOf[OperationBufferPanel].createCompositeOperationFactory(bufferOperationNameField.text)
@@ -46,7 +48,7 @@ class EditMapMenu(val parent: EditMapContent) extends GridPanel(0, 1) {
     reactions += {
       case ButtonClicked(_) => {
         if (bufferOperationNameField.text.trim.isEmpty) {
-          //TODO fill in
+          Dialog.showMessage(this, "You must enter a name for the new operation", "Error", Dialog.Message.Error)
         }
         else {
           val newFactory = operationsBufferWrapper.contents.head.asInstanceOf[ScrollPane].contents.head.asInstanceOf[OperationBufferPanel].createSequenceOperationFactory(bufferOperationNameField.text)
@@ -135,6 +137,43 @@ class EditMapMenu(val parent: EditMapContent) extends GridPanel(0, 1) {
       }
     }
   }
-  contents += new GridPanel(0, 1)
+  contents += new GridPanel(0, 1) {
+    contents += new Button("Verify") {
+      reactions += {
+        case ButtonClicked(_) => {
+          val currMap = parent.currentMap
+          currMap.isValid match {
+            case Success(_) => Dialog.showMessage(this, "The map is valid!", "Success", Dialog.Message.Plain)
+            case Failure(e) => Dialog.showMessage(this, "The map is invalid: " + e.getMessage, "Error", Dialog.Message.Error)
+          }
+        }
+      }
+    }
+    contents += new Button("Save to file") {
+      reactions += {
+        case ButtonClicked(_) => {
+          val fileChooser = new FileChooser(new File(System.getProperty("user.dir"))) {
+            fileSelectionMode = FileChooser.SelectionMode.FilesOnly
+            multiSelectionEnabled = false
+          }
+          val chooseResult = fileChooser.showDialog(EditMapMenu.this, "Save")
+          if (chooseResult == FileChooser.Result.Approve) {
+            val currMap = parent.currentMap
+            currMap.toFile(fileChooser.selectedFile.getAbsolutePath) match {
+              case Success(_) => {}
+              case Failure(e) => Dialog.showMessage(EditMapMenu.this, "Error while saving:\n" + e.getMessage, "Error", Dialog.Message.Error)
+            }
+          }
+        }
+      }
+    }
+    contents += new Button("Main menu") {
+      reactions += {
+        case ButtonClicked(_) => {
+          parent.backToMainMenu
+        }
+      }
+    }
+  }
 
 }

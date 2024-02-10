@@ -2,6 +2,7 @@ package sokoban.lib
 
 import sokoban.lib.operations.Operation
 
+import java.nio.file.{Files, Paths}
 import scala.annotation.tailrec
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.ListBuffer
@@ -25,7 +26,6 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
     def playerPosition: Option[(Int, Int)] = players.headOption
 
-    //TODO: Split Map logic and Game logic into separate classes
   }
 
   private def calculateTileCounter(): TileCounter = {
@@ -64,7 +64,7 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
       new TileCounter(HashSet(), HashSet(), HashSet())
     }
     else {
-      calculateTileCounterTail(0, 0, new TileCounter(HashSet(), HashSet(), HashSet())) //TODO fix adding row to empty map
+      calculateTileCounterTail(0, 0, new TileCounter(HashSet(), HashSet(), HashSet()))
     }
   }
 
@@ -154,7 +154,7 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
             tilesMatrixNew(pos._1)(pos._2) = playerCurrentFloorTile
             tilesMatrixNew(targetPos._1)(targetPos._2) = new Player(steppingTile)
-            Some(new Map(tilesMatrixNew, new MoveOutcome(move, false) :: moves)) //TODO optimize so it doesn't remake game state every time
+            Some(new Map(tilesMatrixNew, new MoveOutcome(move, false) :: moves))
           }
           else if (steppingTile.isPushable) {
             val pushedToPos = Move.posAfterMove(targetPos, move)
@@ -168,7 +168,7 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
 
               tilesMatrixNew(pushedToPos._1)(pushedToPos._2) = steppingTile.cloneWithNewFloor(pushedToTile)
 
-              Some(new Map(tilesMatrixNew, new MoveOutcome(move, true) :: moves)) //TODO optimize so it doesn't remake game state every time
+              Some(new Map(tilesMatrixNew, new MoveOutcome(move, true) :: moves))
             }
             else None
           }
@@ -177,8 +177,6 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
         else None
     }
   }
-
-  //TODO ADD CLONING TO ARRAYS! ELSE NO WORKY!!!
 
   def undo(): Option[Map] = {
     moves match {
@@ -236,6 +234,13 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
     }
 
     buffer.toString().trim
+  }
+
+  def toFile(filePath: String): Try[Unit] = {
+    val fileContent = this.toString
+    Try {
+      Files.write(Paths.get(filePath), fileContent.getBytes())
+    }
   }
 }
 
