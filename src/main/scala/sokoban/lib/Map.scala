@@ -235,7 +235,7 @@ class Map private(val tilesMatrix: Array[Array[Tile]], val moves: List[MoveOutco
       buffer += '\n'
     }
 
-    buffer.toString()
+    buffer.toString().trim
   }
 }
 

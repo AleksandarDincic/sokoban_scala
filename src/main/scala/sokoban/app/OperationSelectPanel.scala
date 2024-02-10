@@ -5,7 +5,7 @@ import sokoban.app.operations.OperationFactory
 import scala.swing.event.SelectionChanged
 import scala.swing.{BorderPanel, ComboBox, GridPanel, Label, Panel}
 
-class OperationSelectPanel(parent: EditMapMenu, operations: List[OperationFactory]) extends BorderPanel {
+class OperationSelectPanel(parent: EditMapMenu, val operations: List[OperationFactory]) extends BorderPanel {
 
   add(new Label("Operation:"), BorderPanel.Position.North)
 
@@ -23,6 +23,8 @@ class OperationSelectPanel(parent: EditMapMenu, operations: List[OperationFactor
     contents += operationsDropdown
     contents += new Panel{}
   }
+
+  def selectedFactory: OperationFactory = operationsDropdown.selection.item
 
   add(operationsDropdownPanel, BorderPanel.Position.Center)
 

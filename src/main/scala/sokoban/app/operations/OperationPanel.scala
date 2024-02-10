@@ -31,10 +31,14 @@ abstract class OperationPanel extends BorderPanel with Operation {
       val nextNum = currNumFromLabel - 1
       operationNumLabel.text = operationNumLabelString(nextNum)
 
-      enabled = nextNum == 1
+      prevButton.enabled = nextNum > 1
+      nextButton.enabled = nextNum < numOfOperations
       operationInnerPanel.contents.clear()
       operationInnerPanel.contents += operationFromNum(nextNum)
       operationInnerPanel.revalidate()
+      operationInnerPanel.repaint()
+      OperationPanel.this.revalidate()
+      OperationPanel.this.repaint()
     }
   }
 
@@ -43,10 +47,14 @@ abstract class OperationPanel extends BorderPanel with Operation {
       val nextNum = currNumFromLabel + 1
       operationNumLabel.text = operationNumLabelString(nextNum)
 
-      enabled = nextNum == numOfOperations
+      prevButton.enabled = nextNum > 1
+      nextButton.enabled = nextNum < numOfOperations
       operationInnerPanel.contents.clear()
       operationInnerPanel.contents += operationFromNum(nextNum)
       operationInnerPanel.revalidate()
+      operationInnerPanel.repaint()
+      OperationPanel.this.revalidate()
+      OperationPanel.this.repaint()
     }
   }
 
