@@ -45,10 +45,18 @@ class EditMapMenu(val parent: EditMapContent) extends GridPanel(0, 1) {
 
     reactions += {
       case ButtonClicked(_) => {
+        if (bufferOperationNameField.text.trim.isEmpty) {
+          //TODO fill in
+        }
+        else {
+          val newFactory = operationsBufferWrapper.contents.head.asInstanceOf[ScrollPane].contents.head.asInstanceOf[OperationBufferPanel].createSequenceOperationFactory(bufferOperationNameField.text)
+          val currentFactories = operationSelectWrapper.contents.head.asInstanceOf[OperationSelectPanel].operations
 
-        //TODO fill in
+          operationSelectWrapper.contents.clear()
+          operationSelectWrapper.contents += new OperationSelectPanel(EditMapMenu.this, newFactory :: currentFactories)
 
-        clearBuffer()
+          clearBuffer()
+        }
       }
     }
   }

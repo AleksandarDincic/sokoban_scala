@@ -15,8 +15,11 @@ trait CompositeOperation extends Operation {
 
     operations.zipWithIndex.foldLeft(initTry)((m, op) => {
       m.flatMap(mm => {
-        op._1.operationBody(mm) match {
-          case Success(mmm) => Success(mmm)
+        op._1.isValidInput match {
+          case Success(_) => op._1.operationBody(mm) match {
+            case Success(mmm) => Success(mmm)
+            case Failure(e) => Failure(new Throwable("Error at operation " + op._2 + ": " + e.getMessage))
+          }
           case Failure(e) => Failure(new Throwable("Error at operation " + op._2 + ": " + e.getMessage))
         }
       })
