@@ -19,11 +19,11 @@ trait FractalizationOperation extends Operation {
 
   class PathToReachability(val currentPos: (Int, Int), val coveredTiles: HashSet[(Int, Int)], val path: HashSet[(Int, Int)], val steps: Int) {
 
-    override val hashCode: Int = this.coveredTiles.hashCode()
+    override val hashCode: Int = this.currentPos.hashCode()
 
     override def equals(obj: Any): Boolean = obj match {
       case o: PathToReachability => {
-        this.coveredTiles.equals(o.coveredTiles)
+        this.currentPos.equals(o.currentPos)
       }
       case _ => false
     }
@@ -41,7 +41,7 @@ trait FractalizationOperation extends Operation {
       Failure(new Throwable("There must be exactly one player on the map"))
     }
     else if (!tilesMatrix.indices.contains(row) || !tilesMatrix(0).indices.contains(col)) {
-      Failure(new Throwable("Tile coordinates must be within the map " + tilesMatrix.indices + " " + tilesMatrix(0).indices))
+      Failure(new Throwable("Tile coordinates must be within the map"))
     }
     else if (tilesMatrix(row)(col) match {
       case Wall() => false
@@ -180,7 +180,8 @@ trait FractalizationOperation extends Operation {
               println(r.steps)
               println(changeInWalls(r))
             })
-            reachabilities.minBy(p => changeInWalls(p))
+            // reachabilities.minBy(p => changeInWalls(p))
+            reachabilities.minBy(p => p.coveredTiles.size)
           }
           println("MIN:")
           for (row <- tilesMatrix.indices) {

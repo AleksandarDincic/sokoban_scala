@@ -18,9 +18,9 @@ trait CompositeOperation extends Operation {
         op._1.isValidInput match {
           case Success(_) => op._1.operationBody(mm) match {
             case Success(mmm) => Success(mmm)
-            case Failure(e) => Failure(new Throwable("Error at operation " + op._2 + ": " + e.getMessage))
+            case Failure(e) => Failure(new Throwable("Error at operation " + (op._2 + 1) + ": " + e.getMessage))
           }
-          case Failure(e) => Failure(new Throwable("Error at operation " + op._2 + ": " + e.getMessage))
+          case Failure(e) => Failure(new Throwable("Error at operation " + (op._2 + 1) + ": " + e.getMessage))
         }
       })
     })

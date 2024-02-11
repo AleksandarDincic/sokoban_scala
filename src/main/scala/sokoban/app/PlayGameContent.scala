@@ -184,7 +184,7 @@ class PlayGameContent private(parent: Window, map: Map, val mapPanelWrapper: Gri
   listenTo(keys)
   reactions += {
     case KeyPressed(_, key, _, _) => {
-      println(key)
+      //println(key)
       PlayGameContent.keyToCommand(key) match {
         case Some(command) => command match {
           case MoveCommand(move) => this.move(move) match {

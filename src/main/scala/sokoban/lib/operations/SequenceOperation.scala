@@ -16,13 +16,13 @@ trait SequenceOperation extends Operation {
           case Success(_) => op._1.operationBody(m._1) match {
             case Success(mm) => (mm, true)
             case Failure(e) => {
-              errorCallback(e)
+              errorCallback(new Throwable("Error at operation " + (op._2 + 1) + ": " + e.getMessage))
               (m._1, false)
             }
           }
           case Failure(e) => {
-              errorCallback(e)
-              (m._1, false)
+            errorCallback(new Throwable("Error at operation " + (op._2 + 1) + ": " + e.getMessage))
+            (m._1, false)
           }
         }
 

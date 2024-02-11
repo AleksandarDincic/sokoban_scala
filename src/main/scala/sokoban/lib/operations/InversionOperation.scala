@@ -10,7 +10,7 @@ trait InversionOperation extends Operation {
 
   override def operationBody(tilesMatrix: Array[Array[Tile]]): Try[Array[Array[Tile]]] = {
     for (row <- tilesMatrix.indices) {
-      for (col <- tilesMatrix.indices) {
+      for (col <- tilesMatrix(0).indices) {
         tilesMatrix(row)(col) match {
           case Crate(Floor()) => tilesMatrix(row)(col) = new Target()
           case Target() => tilesMatrix(row)(col) = new Crate(new Floor())
