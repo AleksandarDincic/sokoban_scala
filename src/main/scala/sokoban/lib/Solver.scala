@@ -140,7 +140,7 @@ class Solver(val map: Map) {
           .toList
           .sortBy(ctd => ctd._3)
 
-        heuristicTail(map.numberOfMoves, map.crates, distances)
+        heuristicTail(0, map.crates, distances)
       }
     }
 
@@ -160,7 +160,11 @@ class Solver(val map: Map) {
 
   private implicit val stateOrdering: Ordering[SolverState] = new Ordering[SolverState] {
     override def compare(x: SolverState, y: SolverState): Int = {
-      y.heuristic - x.heuristic // smaller heuristic is higher priority
+      if (y.heuristic != x.heuristic) {
+        y.heuristic - x.heuristic // smaller heuristic is higher priority
+      } else {
+        y.map.numberOfMoves - x.map.numberOfMoves // less moves is higher priority
+      }
     }
   }
 
