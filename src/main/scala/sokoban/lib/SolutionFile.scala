@@ -1,6 +1,4 @@
-package sokoban.app
-
-import sokoban.lib.Move
+package sokoban.lib
 
 import java.nio.file.{Files, Paths}
 import scala.util.{Failure, Success, Try, Using}

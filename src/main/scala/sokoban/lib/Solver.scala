@@ -50,7 +50,6 @@ class Solver(val map: Map) {
     }
   }
 
-  // init precalculated data (simple deadlocks, reachability for targets maybe?)
   val simpleDeadlocks: Array[Array[Boolean]] = {
     val deadlockArr = Array.fill(map.mapHeight) {
       Array.fill(map.mapWidth) {
@@ -111,28 +110,19 @@ class Solver(val map: Map) {
 
     val heuristic: Int = {
       @tailrec
-      def heuristicTail(cnt: Int, crates: HashSet[(Int, Int)], targets: HashSet[(Int, Int)]): Int = {
-        if (crates.isEmpty) {
-          cnt
-        }
-        else {
-          val currCrate = crates.head
-
-          val distancesFromTarget = HashMap.from(targets.map(t => t -> pushDistances(t)(currCrate._1)(currCrate._2)))
-
-          val reachableTargets = distancesFromTarget.filter((kv) => kv._2 >= 0)
-
-          if (reachableTargets.isEmpty) {
+      def heuristicTail(cnt: Int, crates: HashSet[(Int, Int)], distances: List[((Int, Int), (Int, Int), Int)]): Int = distances match {
+        case Nil => {
+          crates.foldLeft(cnt)((x, currCrate) => {
             val distancesFromAllTargets = HashMap
               .from(map.targets.map(t => t -> pushDistances(t)(currCrate._1)(currCrate._2)))
               .filter(kv => kv._2 >= 0)
             val selectedTarget = distancesFromAllTargets.minBy(kv => kv._2)
-            heuristicTail(cnt + selectedTarget._2, crates - currCrate, targets - selectedTarget._1)
-          }
-          else {
-            val selectedTarget = distancesFromTarget.minBy(kv => kv._2)
-            heuristicTail(cnt + selectedTarget._2, crates - currCrate, targets - selectedTarget._1)
-          }
+            x + selectedTarget._2
+          })
+        }
+        case distance :: tail => {
+          val newDistances = tail.filter(ctd => ctd._1 != distance._1 && ctd._2 != distance._2)
+          heuristicTail(cnt + distance._3, crates - distance._1, newDistances)
         }
       }
 
@@ -143,7 +133,14 @@ class Solver(val map: Map) {
         -1
       }
       else {
-        heuristicTail(steps, map.crates, map.targets)
+        val distances = map.crates
+          .flatMap(c => map.targets.map(t => (c, t)))
+          .map(ct => (ct._1, ct._2, pushDistances(ct._2)(ct._1._1)(ct._1._2)))
+          .filter(ctd => ctd._3 >= 0)
+          .toList
+          .sortBy(ctd => ctd._3)
+
+        heuristicTail(map.numberOfMoves, map.crates, distances)
       }
     }
 
@@ -174,9 +171,9 @@ class Solver(val map: Map) {
 
         @tailrec
         def solveTail(queue: mutable.PriorityQueue[SolverState], visited: HashSet[SolverState]): Option[List[Move]] = {
-          if (visited.size % 500 == 0) {
+          /*if (visited.size % 1000 == 0) {
             println("Visited " + visited.size)
-          }
+          }*/
 
           if (queue.isEmpty) None
           else {
@@ -185,8 +182,9 @@ class Solver(val map: Map) {
               solveTail(queue, visited)
             }
             else {
-              //println(currentState.map.toString + "heuristic: " + currentState.heuristic)
-              //Thread.sleep(1000)
+              /*if (visited.size % 1000 == 0) {
+                println(currentState.map.toString + "heuristic: " + currentState.heuristic)
+              }*/
               if (currentState.map.isWon) {
                 Some(currentState.map.moves.map(moveOutcome => moveOutcome.move).reverse)
               }

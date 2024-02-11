@@ -1,7 +1,7 @@
 package sokoban.app
 
 import sokoban.app.PlayGameContent.{INSTRUCTIONS, MOVES_PREFIX, MSG_PLAYING, MSG_SOLVING, keyToCommand}
-import sokoban.lib.{Down, Left, Map, Move, Right, Solver, Up}
+import sokoban.lib.{Down, Left, Map, Move, Right, SolutionFile, Solver, Up}
 
 import java.awt.Color
 import java.io.File
